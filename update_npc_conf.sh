@@ -29,14 +29,10 @@ for SERVER in "${SERVERS[@]}"; do
         continue
     fi
 
-    # Check if we should skip ping tests
-    if [ "$SKIP_PING" = false ]; then
-        echo "🔄 Pinging new NPS Server IP ($NEW_NPS_IP) from $HOST..."
-        ssh -i "$PRIVATE_KEY" -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" "ping -c 3 -W 2 $NEW_NPS_IP"
-        if [ $? -ne 0 ]; then
-            echo "❌ ERROR: $HOST cannot reach $NEW_NPS_IP. Skipping..."
-            continue
-        fi
+    echo "🔄 Pinging new NPS Server IP ($NEW_NPS_IP) from $HOST..."
+    ssh -i "$PRIVATE_KEY" -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" "ping -c 3 -W 2 $NEW_NPS_IP"
+    if [ $? -ne 0 ]; then
+        echo "❌ ERROR: $HOST cannot reach $NEW_NPS_IP. Skipping..."
     fi
 
     echo "🔄 Telnet test from $HOST to $NEW_NPS_IP:$TELNET_PORT..."
