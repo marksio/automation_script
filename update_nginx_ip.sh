@@ -1,5 +1,3 @@
-# Use for updating NGINX Configuration file, IP Address Changes
-
 #!/bin/bash
 
 # Ensure the script is run with a file argument
