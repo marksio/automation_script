@@ -1,3 +1,6 @@
+# Update IP Address of NGINX configuration proxy_pass. OLD to NEW IP Address.
+# NGINX Server Migration (New Public and Private IP Address)
+
 #!/bin/bash
 
 # Ensure the script is run with a file argument
@@ -72,9 +75,9 @@ done
 if sudo nginx -t; then
     echo "NGINX configuration test passed."
 
-    echo "Reloading & Restarting NGINX..."
+    echo "Reloading NGINX..."
     sudo nginx -s reload && echo "NGINX reloaded successfully." || echo "Failed to reload NGINX!"
-    sudo systemctl restart nginx && echo "NGINX restarted successfully." || echo "Failed to restart NGINX!"
+    #sudo systemctl restart nginx && echo "NGINX restarted successfully." || echo "Failed to restart NGINX!"
 else
     echo "NGINX configuration test failed. Please check the configuration files."
 fi
