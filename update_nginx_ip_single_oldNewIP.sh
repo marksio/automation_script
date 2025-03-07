@@ -9,7 +9,7 @@ fi
 OLD_IP="$1"
 NEW_IP="$2"
 CONFIG_DIR="/etc/nginx/sites.d/"
-BACKUP_DIR="/home/ubuntu/nginx_sites.d_backup_$OLD_IPto$OLD_IP_$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR="/home/ubuntu/nginx_sites.d_backup_$1to$2_$(date +%Y%m%d_%H%M%S)"
 
 # Check if the backup directory exists, if not create it
 if [ ! -d "$BACKUP_DIR" ]; then
