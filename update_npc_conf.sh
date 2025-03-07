@@ -58,9 +58,13 @@ for SERVER in "${SERVERS[@]}"; do
         echo "🔄 Restarting Npc service..."
         sudo systemctl restart Npc
 
+        echo "🔄 Wait for 1 Second..."
+        # Wait for 1 second
+        sleep 1
+
         # Verify Npc service status
         echo "🔍 Checking Npc service status..."
-        sudo systemctl status Npc --no-pager | head -n 10
+        sudo systemctl status Npc --no-pager | head -n 20
 EOF
 
     echo "✅ Configuration updated successfully on $HOST!"
