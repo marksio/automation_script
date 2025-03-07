@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Define variables
+PRIVATE_KEY="$HOME/xxx/xxxxKEY"
+USERNAME="ubuntu"
+CONFIG_PATH="/opt/nps-client/conf/npc.conf"
+NEW_NPS_IP="xx.x.x.x"
+TELNET_PORT=xxxx
+BACKUP_SUFFIX=".backup_$(date +%Y%m%d_%H%M%S)"
+TEMP_STATUS_FILE="/tmp/npc_status_check.txt"
+
+# List of servers (IP:PORT format)
+SERVERS=(
+    "x.x.x.x:22"
+)
+
+# Summary arrays
+SUCCESS_UPDATES=()
+FAILED_UPDATES=()
+
+echo "🚀 Starting NPC configuration update on multiple servers...\n"
+
+# Loop through each server
+for SERVER in "${SERVERS[@]}"; do
+    HOST=$(echo "$SERVER" | cut -d':' -f1)
+    PORT=$(echo "$SERVER" | cut -d':' -f2)
+
+    echo "🔄 Connecting to $HOST on port $PORT..."
+
+    ssh -i "$PRIVATE_KEY" -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" <<EOF
+        echo "✅ Connected to $HOST:$PORT. Modifying $CONFIG_PATH..."
+
+        # Backup the current npc.conf file
+        sudo cp "$CONFIG_PATH" "$CONFIG_PATH$BACKUP_SUFFIX"
+
+        # Replace old NPS server IP with the new one (including Telnet port)
+        sudo sed -i "s/^server_addr=.*/server_addr=$NEW_NPS_IP:$TELNET_PORT/" "$CONFIG_PATH"
+
+        # Restart Npc service
+        echo "🔄 Restarting Npc service..."
+        sudo systemctl restart Npc
+        sleep 1  # Wait for service to stabilize
+
+        # Verify Npc service status and store the result in a temporary file
+        echo "🔍 Checking Npc service status..."
+        sudo systemctl status Npc --no-pager | head -n 20 | grep "$NEW_NPS_IP:$TELNET_PORT" > $TEMP_STATUS_FILE
+EOF
+
+    # Check if the update was successful by verifying connection in the service status
+    ssh -i "$PRIVATE_KEY" -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" "cat $TEMP_STATUS_FILE" | grep "$NEW_NPS_IP:$TELNET_PORT" > /dev/null
+
+    if [ $? -eq 0 ]; then
+        echo "✅ Configuration updated successfully on $HOST:$PORT!"
+        SUCCESS_UPDATES+=("$HOST:$PORT")
+
+        # If successful, delete the backup file & Delete the temporary status file
+        ssh -i "$PRIVATE_KEY" -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" <<EOF
+        sudo rm -f "$CONFIG_PATH$BACKUP_SUFFIX"
+        sudo rm -f "$TEMP_STATUS_FILE"
+EOF
+    else
+        echo "❌ ERROR: Configuration update failed on $HOST:$PORT! Rolling back..."
+        FAILED_UPDATES+=("$HOST:$PORT")
+
+        # Restore the backup file if the update failed
+        ssh -i "$PRIVATE_KEY" -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" <<EOF
+        echo "✅ Connected to $HOST:$PORT. Restore the backup file if the update failed for the $CONFIG_PATH..."
+
+        sudo mv -f "$CONFIG_PATH$BACKUP_SUFFIX" "$CONFIG_PATH"
+
+        # Restart Npc service
+        echo "🔄 Restarting Npc service..."
+        sudo systemctl restart Npc
+        sleep 1  # Wait for service to stabilize
+
+        # Verify Npc service status and store the result in a temporary file
+        echo "🔍 Checking Npc service status..."
+        sudo systemctl status Npc --no-pager | head -n 20 | grep "$NEW_NPS_IP:$TELNET_PORT" > $TEMP_STATUS_FILE
+EOF
+    fi
+
+done
+
+# Display Summary
+echo "======================================"
+echo "📋 NPC Configuration Update Summary"
+echo "======================================"
+
+# Successful updates
+if [ ${#SUCCESS_UPDATES[@]} -gt 0 ]; then
+    echo "✅ Successfully updated (${#SUCCESS_UPDATES[@]} servers):"
+    for success in "${SUCCESS_UPDATES[@]}"; do
+        echo "   - $success"
+    done
+else
+    echo "⚠️ No successful updates."
+fi
+
+echo ""
+
+# Failed updates
+if [ ${#FAILED_UPDATES[@]} -gt 0 ]; then
+    echo "❌ Failed updates (${#FAILED_UPDATES[@]} servers):"
+    for failure in "${FAILED_UPDATES[@]}"; do
+        echo "   - $failure"
+    done
+else
+    echo "✅ No failed updates."
+fi
+
+echo "======================================"
+echo "🎉 All servers processed."
