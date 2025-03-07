@@ -3,7 +3,7 @@
 #!/bin/bash
 
 # Define variables
-PRIVATE_KEY="$HOME/Desktop/MarkPrivateKey"
+PRIVATE_KEY="$HOME/xxxx/xxxxxxKey"
 USERNAME="ubuntu"
 CONFIG_PATH="/opt/nps-client/conf/npc.conf"
 NEW_NPS_IP="xx.x.x.xx"  # <-- Change this to your new NPS server IP
@@ -12,7 +12,7 @@ BACKUP_SUFFIX=".backup_$(date +%Y%m%d_%H%M%S)"
 
 # List of servers (IP:PORT format)
 SERVERS=(
-    "10.xx.xx.xx:22"
+    "xx.xx.xx.xx:22"
 )
 
 echo "Starting NPC configuration update on multiple servers..."
