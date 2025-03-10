@@ -24,6 +24,7 @@ cp -r $CONFIG_DIR/* $BACKUP_DIR/
 echo "Checking connectivity to $NEW_IP..."
 if ! ping -c 3 -W 2 "$NEW_IP" > /dev/null 2>&1; then
     echo "Ping to $NEW_IP failed! Exiting."
+    rm -rf "$BACKUP_DIR"
     exit 1
 else
     # If all pings were successful, proceed with modifying the config files
